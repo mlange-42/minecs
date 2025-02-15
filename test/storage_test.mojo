@@ -50,6 +50,33 @@ fn test_storages() raises:
     assert_equal(arch2[]._data[100].x, 200)
     assert_equal(arch2[]._data[100].y, 201)
 
-    pos = posStorage[].get(EntityIndex(arch2Idx, 100))
+    pos = posStorage[].get_ptr(EntityIndex(arch2Idx, 100))
     assert_equal(pos[].x, 200)
     assert_equal(pos[].y, 201)
+
+
+fn test_storage_add_remove() raises:
+    var r = Registry()
+    var storages = Storages()
+
+    posId = r.get_id[Position]()
+    storages.add[Position](posId)
+
+    s = storages.get[Position](posId)
+    arch_idx = s[].add_archetype(Mask(posId))
+
+    for i in range(8):
+        _ = s[].get_archetype(arch_idx)[].add(Position(i, i + 1))
+
+    assert_equal(len(s[].get_archetype(arch_idx)[]), 8)
+
+    swapped = s[].remove(EntityIndex(arch_idx, 7))
+    assert_false(swapped)
+    assert_equal(len(s[].get_archetype(arch_idx)[]), 7)
+
+    swapped = s[].remove(EntityIndex(arch_idx, 0))
+    assert_true(swapped)
+    assert_equal(len(s[].get_archetype(arch_idx)[]), 6)
+
+    pos = s[].get_ptr(EntityIndex(arch_idx, 0))
+    assert_equal(pos[].x, 6)

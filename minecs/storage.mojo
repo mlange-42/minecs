@@ -18,13 +18,11 @@ trait Storage:
     fn extend(mut self, archetype: ArchetypeID) -> UInt32:
         ...
 
-    """
     fn remove(mut self, index: EntityIndex) -> Bool:
         ...
 
     fn copy(mut self, index: EntityIndex, target: ArchetypeID) -> UInt32:
         ...
-    """
 
 
 struct Storages:
@@ -78,10 +76,10 @@ struct ComponentStorage[T: Component](Storage):
     ) -> Pointer[ArchetypeStorage[T], __origin_of(self._archetypes)]:
         return Pointer.address_of(self._archetypes[idx])
 
-    fn get(
+    fn get_ptr(
         mut self, index: EntityIndex
     ) -> Pointer[T, __origin_of(self._archetypes[index.archetype]._data)]:
-        return self._archetypes[index.archetype].get(index.index)
+        return self._archetypes[index.archetype].get_ptr(index.index)
 
     fn has_archetype(self, archetype: ArchetypeID) -> Bool:
         return self._archetypes[archetype].is_active()
@@ -96,6 +94,13 @@ struct ComponentStorage[T: Component](Storage):
     fn extend(mut self, archetype: ArchetypeID) -> UInt32:
         return self._archetypes[archetype].add(T())
 
+    fn remove(mut self, index: EntityIndex) -> Bool:
+        return self._archetypes[index.archetype].remove(index.index)
+
+    fn copy(mut self, index: EntityIndex, target: ArchetypeID) -> UInt32:
+        comp = self._archetypes[index.archetype].get(index.index)
+        return self._archetypes[target].add(comp)
+
 
 @value
 struct ArchetypeStorage[T: Component](CollectionElement):
@@ -106,15 +111,30 @@ struct ArchetypeStorage[T: Component](CollectionElement):
         self._data = List[T]()
         self._active = False
 
-    fn get(mut self, index: UInt32) -> Pointer[T, __origin_of(self._data)]:
+    fn get_ptr(mut self, index: UInt32) -> Pointer[T, __origin_of(self._data)]:
         return Pointer.address_of(self._data[index])
+
+    fn get(self, index: UInt32) -> ref [self._data] T:
+        return self._data[index]
 
     fn add(mut self, element: T) -> UInt32:
         self._data.append(element)
         return len(self._data) - 1
+
+    fn remove(mut self, index: UInt32) -> Bool:
+        old_idx = len(self._data) - 1
+        swapped = index != old_idx
+
+        if swapped:
+            self._data[index] = self._data[old_idx]
+        self._data.resize(len(self._data) - 1)
+        return swapped
 
     fn is_active(self) -> Bool:
         return self._active
 
     fn activate(mut self):
         self._active = True
+
+    fn __len__(self) -> Int:
+        return len(self._data)
