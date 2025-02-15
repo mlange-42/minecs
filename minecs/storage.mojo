@@ -1,11 +1,30 @@
 from sys.info import sizeof
 from memory import memcpy, UnsafePointer
-from .types import Component, ID, MAX_COMPONENTS, _DummyComponent
+from .types import Component, ID, ArchetypeID, MAX_COMPONENTS, _DummyComponent
+from .mask import Mask
+from .entity import EntityIndex
 
 
 trait Storage:
     fn get_type(self) -> ID:
         ...
+
+    fn has_archetype(self, archetype: ArchetypeID) -> Bool:
+        ...
+
+    fn add_archetype(mut self, mask: Mask) -> UInt:
+        ...
+
+    fn extend(mut self, archetype: ArchetypeID) -> UInt32:
+        ...
+
+    """
+    fn remove(mut self, index: EntityIndex) -> Bool:
+        ...
+
+    fn copy(mut self, index: EntityIndex, target: ArchetypeID) -> UInt32:
+        ...
+    """
 
 
 struct Storages:
@@ -59,18 +78,43 @@ struct ComponentStorage[T: Component](Storage):
     ) -> Pointer[ArchetypeStorage[T], __origin_of(self._archetypes)]:
         return Pointer.address_of(self._archetypes[idx])
 
-    fn add_archetype(mut self) -> UInt:
-        idx = len(self._archetypes)
+    fn get(
+        mut self, index: EntityIndex
+    ) -> Pointer[T, __origin_of(self._archetypes[index.archetype]._data)]:
+        return self._archetypes[index.archetype].get(index.index)
+
+    fn has_archetype(self, archetype: ArchetypeID) -> Bool:
+        return self._archetypes[archetype].is_active()
+
+    fn add_archetype(mut self, mask: Mask) -> UInt:
+        index = len(self._archetypes)
         self._archetypes.append(ArchetypeStorage[T]())
-        return idx
+        if mask.get(self._component):
+            self._archetypes[index].activate()
+        return index
+
+    fn extend(mut self, archetype: ArchetypeID) -> UInt32:
+        return self._archetypes[archetype].add(T())
 
 
 @value
 struct ArchetypeStorage[T: Component](CollectionElement):
     var _data: List[T]
+    var _active: Bool
 
     fn __init__(out self):
         self._data = List[T]()
+        self._active = False
 
-    fn add(mut self, element: T):
+    fn get(mut self, index: UInt32) -> Pointer[T, __origin_of(self._data)]:
+        return Pointer.address_of(self._data[index])
+
+    fn add(mut self, element: T) -> UInt32:
         self._data.append(element)
+        return len(self._data) - 1
+
+    fn is_active(self) -> Bool:
+        return self._active
+
+    fn activate(mut self):
+        self._active = True

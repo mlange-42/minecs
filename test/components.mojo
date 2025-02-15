@@ -9,6 +9,10 @@ struct Position(mx.Component):
     var x: Float64
     var y: Float64
 
+    fn __init__(out self):
+        self.x = 0
+        self.y = 0
+
 
 @value
 @register_passable("trivial")
@@ -17,3 +21,7 @@ struct Velocity(mx.Component):
 
     var x: Float64
     var y: Float64
+
+    fn __init__(out self):
+        self.x = 0
+        self.y = 0

@@ -1,5 +1,7 @@
-from .storage import ComponentStorage
+from .storage import Storages
+from .registry import Registry
 
 
 struct World:
-    pass
+    var registry: Registry
+    var storages: Storages

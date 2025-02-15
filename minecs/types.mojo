@@ -1,10 +1,11 @@
 alias MAX_COMPONENTS = 256
 
-# ID is the component identifier.
 alias ID = UInt8
+alias EntityID = UInt32
+alias ArchetypeID = UInt16
 
 
-trait Component(CollectionElement):
+trait Component(CollectionElement, Defaultable):
     alias ID: Id
 
 
