@@ -1,5 +1,6 @@
 from collections import Dict
-from .types import Component, Id, MAX_COMPONENTS
+from .types import Component, Id
+from .constants import TOTAL_MASK_BITS
 
 
 struct Registry:
@@ -12,10 +13,10 @@ struct Registry:
         if T.ID in self._lookup:
             return self._lookup.get(T.ID).value()
 
-        if len(self._lookup) >= MAX_COMPONENTS:
+        if len(self._lookup) >= TOTAL_MASK_BITS:
             raise Error(
                 String("Ran out of the capacity of {} components").format(
-                    MAX_COMPONENTS
+                    TOTAL_MASK_BITS
                 )
             )
         var id = len(self._lookup)

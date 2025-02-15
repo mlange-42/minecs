@@ -1,0 +1,2 @@
+alias TOTAL_MASK_BITS = 256
+alias MAX_UINT32 = 2**32 - 1

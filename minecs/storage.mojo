@@ -1,6 +1,7 @@
 from sys.info import sizeof
 from memory import memcpy, UnsafePointer
-from .types import Component, ID, ArchetypeID, MAX_COMPONENTS, _DummyComponent
+from .constants import TOTAL_MASK_BITS
+from .types import Component, ID, ArchetypeID, _DummyComponent
 from .mask import Mask
 from .entity import EntityIndex
 
@@ -32,7 +33,7 @@ struct Storages:
 
     fn __init__(out self):
         self._data = UnsafePointer[UInt8].alloc(
-            MAX_COMPONENTS * Self.storage_size
+            TOTAL_MASK_BITS * Self.storage_size
         )
 
     fn add[T: Component](mut self, id: ID):
@@ -68,22 +69,27 @@ struct ComponentStorage[T: Component](Storage):
         self._component = comp
         self._archetypes = List[ArchetypeStorage[T]]()
 
+    @always_inline
     fn get_type(self) -> ID:
         return self._component
 
+    @always_inline
     fn get_archetype(
         mut self, idx: UInt
     ) -> Pointer[ArchetypeStorage[T], __origin_of(self._archetypes)]:
         return Pointer.address_of(self._archetypes[idx])
 
+    @always_inline
     fn get_ptr(
         mut self, index: EntityIndex
     ) -> Pointer[T, __origin_of(self._archetypes[index.archetype]._data)]:
         return self._archetypes[index.archetype].get_ptr(index.index)
 
+    @always_inline
     fn has_archetype(self, archetype: ArchetypeID) -> Bool:
         return self._archetypes[archetype].is_active()
 
+    @always_inline
     fn add_archetype(mut self, mask: Mask) -> UInt:
         index = len(self._archetypes)
         self._archetypes.append(ArchetypeStorage[T]())
@@ -91,12 +97,15 @@ struct ComponentStorage[T: Component](Storage):
             self._archetypes[index].activate()
         return index
 
+    @always_inline
     fn extend(mut self, archetype: ArchetypeID) -> UInt32:
         return self._archetypes[archetype].add(T())
 
+    @always_inline
     fn remove(mut self, index: EntityIndex) -> Bool:
         return self._archetypes[index.archetype].remove(index.index)
 
+    @always_inline
     fn copy(mut self, index: EntityIndex, target: ArchetypeID) -> UInt32:
         comp = self._archetypes[index.archetype].get(index.index)
         return self._archetypes[target].add(comp)
@@ -111,16 +120,20 @@ struct ArchetypeStorage[T: Component](CollectionElement):
         self._data = List[T]()
         self._active = False
 
+    @always_inline
     fn get_ptr(mut self, index: UInt32) -> Pointer[T, __origin_of(self._data)]:
         return Pointer.address_of(self._data[index])
 
+    @always_inline
     fn get(self, index: UInt32) -> ref [self._data] T:
         return self._data[index]
 
+    @always_inline
     fn add(mut self, element: T) -> UInt32:
         self._data.append(element)
         return len(self._data) - 1
 
+    @always_inline
     fn remove(mut self, index: UInt32) -> Bool:
         old_idx = len(self._data) - 1
         swapped = index != old_idx
@@ -130,11 +143,14 @@ struct ArchetypeStorage[T: Component](CollectionElement):
         self._data.resize(len(self._data) - 1)
         return swapped
 
+    @always_inline
     fn is_active(self) -> Bool:
         return self._active
 
+    @always_inline
     fn activate(mut self):
         self._active = True
 
+    @always_inline
     fn __len__(self) -> Int:
         return len(self._data)
