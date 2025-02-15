@@ -1,0 +1,29 @@
+name: Benchmark
+on: 
+  push:
+    branches:
+    - main
+  pull_request:
+jobs:
+  build_and_test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install magic CLI
+      run: |
+        curl -ssL https://magic.modular.com | bash
+        source /home/runner/.bash_profile 
+ 
+    - name: Install mojo and dependencies
+      run: |
+        source /home/runner/.bash_profile 
+        magic install --locked
+  
+    - name: Run benchmarks
+      run: |
+        source /home/runner/.bash_profile 
+        magic run mojo -I . benchmark/run_benchmarks.mojo
