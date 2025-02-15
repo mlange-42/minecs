@@ -1,11 +1,9 @@
 from testing import *
 import minecs as mx
 from minecs.storage import ComponentStorage
+from components import Position
 
 
-struct Position(mx.Component):
-    alias ID = mx.Id("minecs/test/Position")
-
-
-fn test_query_length() raises:
-    var s = ComponentStorage[Position]()
+fn test_storage() raises:
+    var s = ComponentStorage[Position](11)
+    assert_equal(s.get_type(), 11)

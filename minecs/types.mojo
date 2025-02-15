@@ -2,7 +2,7 @@
 alias ID = UInt8
 
 
-trait Component:
+trait Component(CollectionElement):
     alias ID: Id
 
 

@@ -6,11 +6,18 @@ trait Storage:
         ...
 
 
-@value
 struct ComponentStorage[T: Component](Storage):
+    var _component: ID
+    var _archetypes: List[ArchetypeStorage[T]]
+
+    fn __init__(out self, comp: ID):
+        self._component = comp
+        self._archetypes = List[ArchetypeStorage[T]]()
+
     fn get_type(self) -> ID:
-        return T.ID.id()
+        return self._component
 
 
-struct ArchetypeStorage:
-    pass
+@value
+struct ArchetypeStorage[T: Component](CollectionElement):
+    var _data: List[T]
