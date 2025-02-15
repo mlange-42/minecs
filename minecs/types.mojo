@@ -1,5 +1,3 @@
-alias MAX_COMPONENTS = 256
-
 alias ID = UInt8
 alias EntityID = UInt32
 alias ArchetypeID = UInt16
