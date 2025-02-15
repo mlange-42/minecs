@@ -55,9 +55,9 @@ struct ComponentStorage[T: Component](Storage):
         return self._component
 
     fn get_archetype(
-        ref self, idx: UInt
-    ) -> ref [self._archetypes] ArchetypeStorage[T]:
-        return self._archetypes[idx]
+        mut self, idx: UInt
+    ) -> Pointer[ArchetypeStorage[T], __origin_of(self._archetypes)]:
+        return Pointer.address_of(self._archetypes[idx])
 
     fn add_archetype(mut self) -> UInt:
         idx = len(self._archetypes)
