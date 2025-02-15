@@ -1,9 +1,17 @@
+alias MAX_COMPONENTS = 256
+
 # ID is the component identifier.
 alias ID = UInt8
 
 
 trait Component(CollectionElement):
     alias ID: Id
+
+
+@value
+@register_passable("trivial")
+struct _DummyComponent(Component):
+    alias ID = Id("minecs/types/_DummyComponent")
 
 
 @register_passable("trivial")
