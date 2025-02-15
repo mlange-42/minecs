@@ -9,13 +9,13 @@ struct EntityPool(Movable, Copyable):
     Implements https:#skypjack.github.io/2019-05-06-ecs-baf-part-3/
     """
 
-    var _entities: List[Entity]
+    var _entities: List[Entity, hint_trivial_type=True]
     var _next: EntityID
     var _available: Int
 
     @always_inline
     fn __init__(mut self):
-        self._entities = List[Entity]()
+        self._entities = List[Entity, hint_trivial_type=True]()
         self._entities.append(Entity(0, MAX_UINT32))
         self._next = 0
         self._available = 0
