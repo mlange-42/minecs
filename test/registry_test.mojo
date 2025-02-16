@@ -14,3 +14,5 @@ fn test_registry() raises:
 
     velID = r.get_id[Velocity]()
     assert_equal(velID, 1)
+
+    assert_equal(len(r), 2)

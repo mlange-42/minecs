@@ -19,8 +19,8 @@ fn test_storages() raises:
     posId = r.get_id[Position]()
     velId = r.get_id[Velocity]()
 
-    s.add[Position](posId)
-    s.add[Position](velId)
+    s.add_component[Position](posId)
+    s.add_component[Velocity](velId)
 
     posStorage = s.get[Position](posId)
     velStorage = s.get[Velocity](velId)
@@ -60,7 +60,7 @@ fn test_storage_add_remove() raises:
     var storages = Storages()
 
     posId = r.get_id[Position]()
-    storages.add[Position](posId)
+    storages.add_component[Position](posId)
 
     s = storages.get[Position](posId)
     arch_idx = s[].add_archetype(Mask(posId))
@@ -80,3 +80,23 @@ fn test_storage_add_remove() raises:
 
     pos = s[].get_ptr(EntityIndex(arch_idx, 0))
     assert_equal(pos[].x, 6)
+
+
+fn test_storage_add_archetype() raises:
+    var r = Registry()
+    var storages = Storages()
+
+    posId = r.get_id[Position]()
+    velId = r.get_id[Velocity]()
+
+    storages.add_component[Position](posId)
+    storages.add_component[Velocity](velId)
+
+    storages.add_archetype(Mask(0))
+    storages.add_archetype(Mask(1))
+
+    pos_storage = storages.get[Position](posId)
+    assert_equal(len(pos_storage[]._archetypes), 2)
+
+    storages.add_archetype(Mask(2))
+    assert_equal(len(pos_storage[]._archetypes), 3)

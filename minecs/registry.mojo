@@ -23,3 +23,6 @@ struct Registry:
 
         self._lookup[T.ID] = id
         return id
+
+    fn __len__(self) -> Int:
+        return len(self._lookup)

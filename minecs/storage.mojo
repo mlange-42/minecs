@@ -28,21 +28,41 @@ trait Storage:
 
 struct Storages:
     alias storage_size = sizeof[ComponentStorage[_DummyComponent]]()
+    alias add_archetype_func = fn (mask: Mask) escaping -> UInt
 
     var _data: UnsafePointer[UInt8]
+    var _length: UInt8
+
+    var _has_archetype_funcs: List[Self.add_archetype_func]
 
     fn __init__(out self):
         self._data = UnsafePointer[UInt8].alloc(
             TOTAL_MASK_BITS * Self.storage_size
         )
+        self._has_archetype_funcs = List[Self.add_archetype_func]()
+        self._length = 0
 
-    fn add[T: Component](mut self, id: ID):
+    fn add_component[T: Component](mut self, id: ID) raises:
+        if id != self._length:
+            raise Error("storages can be extended only sequentially")
+
         var s = ComponentStorage[T](id)
         memcpy(
             self._get_storage_ptr(id),
             UnsafePointer.address_of(s).bitcast[UInt8](),
             index(Self.storage_size),
         )
+        ptr = self.get[T](id)
+
+        fn add_archetype(mask: Mask) escaping -> UInt:
+            return ptr[].add_archetype(mask)
+
+        self._has_archetype_funcs.append(add_archetype)
+        self._length += 1
+
+    fn add_archetype(mut self, mask: Mask):
+        for i in range(self._length):
+            _ = self._has_archetype_funcs[i](mask)
 
     @always_inline
     fn get[

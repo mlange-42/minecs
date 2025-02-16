@@ -49,3 +49,61 @@ struct World:
         if not self.is_alive(entity):
             raise Error("can't get component of a dead entity")
         return self._entities[entity.id()]
+
+    fn _exchange(mut self, entity: Entity, add: List[ID], rem: List[ID]) raises:
+        if not self.is_alive(entity):
+            raise Error("can't exchange components on a dead entity")
+        if len(add) == 0 and len(rem) == 0:
+            return
+
+        index = self._entities[entity.id()]
+        old_arch = Pointer.address_of(self._archetypes[index.archetype])
+
+        mask = old_arch[].mask()
+        self._exchange_on_mask(mask, add, rem)
+
+        old_ids = old_arch[].components()
+
+        arch_idx = self._find_or_create_archetype(mask)
+        new_index = self._archetypes[arch_idx].add(entity)
+
+        # TODO continue
+
+    fn _find_or_create_archetype(mut self, read mask: Mask) -> ArchetypeID:
+        # TODO: use archetype graph
+        index = -1
+        for i in range(len(self._archetypes)):
+            if self._archetypes[i].mask() == mask:
+                index = i
+                break
+
+        if index < 0:
+            index = Int(self._create_archetype(mask))
+        return ArchetypeID(index)
+
+    fn _create_archetype(mut self, read mask: Mask) -> ArchetypeID:
+        comps = mask.get_bits(self._registry)
+        index = len(self._archetypes)
+        self._archetypes.append(Archetype(index, comps, mask))
+        self._storages.add_archetype(mask)
+        return index
+
+    fn _exchange_on_mask(
+        self, mut mask: Mask, add: List[ID], rem: List[ID]
+    ) raises:
+        for comp in rem:
+            if not mask.get(comp[]):
+                raise Error(
+                    "entity does not have a component of type ID {}, can't"
+                    " remove".format(comp[])
+                )
+            mask.set(comp[], False)
+
+        for comp in add:
+            if mask.get(comp[]):
+                raise Error(
+                    "entity already has component of type %v, can't add".format(
+                        comp[]
+                    )
+                )
+            mask.set(comp[], True)
