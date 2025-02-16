@@ -1,5 +1,6 @@
 from testing import *
 import minecs as mx
+from minecs.archetype import Archetype
 from minecs.storage import ArchetypeStorage, ComponentStorage, Storages
 from minecs.registry import Registry
 from minecs.entity import EntityIndex
@@ -19,8 +20,8 @@ fn test_storages() raises:
     posId = r.get_id[Position]()[0]
     velId = r.get_id[Velocity]()[0]
 
-    s.add_component[Position](posId)
-    s.add_component[Velocity](velId)
+    s.add_component[Position](posId, List[Archetype]())
+    s.add_component[Velocity](velId, List[Archetype]())
 
     posStorage = s.get_storage[Position](posId)
     velStorage = s.get_storage[Velocity](velId)
@@ -62,7 +63,7 @@ fn test_storage_add_remove() raises:
     var storages = Storages()
 
     posId = r.get_id[Position]()[0]
-    storages.add_component[Position](posId)
+    storages.add_component[Position](posId, List[Archetype]())
 
     s = storages.get_storage[Position](posId)
     arch_idx = s[].add_archetype(Mask(posId))
@@ -91,8 +92,8 @@ fn test_storage_add_archetype() raises:
     posId = r.get_id[Position]()[0]
     velId = r.get_id[Velocity]()[0]
 
-    storages.add_component[Position](posId)
-    storages.add_component[Velocity](velId)
+    storages.add_component[Position](posId, List[Archetype]())
+    storages.add_component[Velocity](velId, List[Archetype]())
 
     storages.add_archetype(Mask(0))
     storages.add_archetype(Mask(1))

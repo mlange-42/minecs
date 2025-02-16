@@ -127,7 +127,7 @@ struct ComponentStorage[T: Component](Storage):
 
     fn __init__(out self, comp: ID, archetypes: List[Archetype]):
         self._component = comp
-        self._archetypes = List[ArchetypeStorage[T]](capacity=len(archetypes))
+        self._archetypes = List[ArchetypeStorage[T]]()
 
         i = 0
         for arch in archetypes:
@@ -135,6 +135,10 @@ struct ComponentStorage[T: Component](Storage):
             if arch[].mask().get(comp):
                 self._archetypes[i].activate()
             i += 1
+
+    fn __init__(out self, comp: ID):
+        self._component = comp
+        self._archetypes = List[ArchetypeStorage[T]]()
 
     @always_inline
     fn get_type(self) -> ID:
