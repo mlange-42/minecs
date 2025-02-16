@@ -9,9 +9,9 @@ struct Registry:
     fn __init__(out self):
         self._lookup = Dict[Id, ID]()
 
-    fn get_id[T: Component](mut self) raises -> ID:
+    fn get_id[T: Component](mut self) raises -> (ID, Bool):
         if T.ID in self._lookup:
-            return self._lookup.get(T.ID).value()
+            return self._lookup.get(T.ID).value(), False
 
         if len(self._lookup) >= TOTAL_MASK_BITS:
             raise Error(
@@ -19,7 +19,10 @@ struct Registry:
                     TOTAL_MASK_BITS
                 )
             )
-        var id = len(self._lookup)
+        var id = ID(len(self._lookup))
 
         self._lookup[T.ID] = id
-        return id
+        return id, True
+
+    fn __len__(self) -> Int:
+        return len(self._lookup)

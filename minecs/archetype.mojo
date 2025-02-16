@@ -20,6 +20,12 @@ struct Archetype(CollectionElement):
         self._mask = mask^
         self._entities = List[Entity]()
 
+    fn mask(self) -> ref [self._mask] Mask:
+        return self._mask
+
+    fn components(self) -> ref [self._components] List[ID]:
+        return self._components
+
     fn add(mut self, entity: Entity) -> UInt32:
         self._entities.append(entity)
         return len(self._entities) - 1

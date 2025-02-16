@@ -1,6 +1,7 @@
 from bit import pop_count, bit_not
 from collections import InlineList, InlineArray
 
+from .registry import Registry
 from .types import ID
 
 
@@ -133,3 +134,20 @@ struct Mask(Stringable, KeyElement):
     fn __repr__(self) -> String:
         """Representation string of the Mask."""
         return "BitMask(" + String(self._bytes) + ")"
+
+    fn get_bits(self, read reg: Registry) -> List[ID]:
+        result = List[ID](capacity=self.total_bits_set())
+
+        total_ids = len(reg)
+        bins = total_ids // 8 + 1
+
+        for i in range(bins):
+            if Int(self._bytes[i]) == 0:
+                continue
+
+            for j in range(8):
+                var id = i * 8 + j
+                if self.get(id):
+                    result.append(id)
+
+        return result
