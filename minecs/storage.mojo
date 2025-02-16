@@ -28,18 +28,30 @@ trait Storage:
 
 struct Storages:
     alias storage_size = sizeof[ComponentStorage[_DummyComponent]]()
+
     alias add_archetype_func = fn (mask: Mask) escaping -> UInt
+    alias copy_func = fn (
+        index: EntityIndex, target: ArchetypeID
+    ) escaping -> UInt32
+    alias extend_func = fn (archetype: ArchetypeID) escaping -> UInt32
+    alias remove_func = fn (index: EntityIndex) escaping -> Bool
 
     var _data: UnsafePointer[UInt8]
     var _length: UInt8
 
     var _has_archetype_funcs: List[Self.add_archetype_func]
+    var _copy_funcs: List[Self.copy_func]
+    var _extend_funcs: List[Self.extend_func]
+    var _remove_funcs: List[Self.remove_func]
 
     fn __init__(out self):
         self._data = UnsafePointer[UInt8].alloc(
             TOTAL_MASK_BITS * Self.storage_size
         )
         self._has_archetype_funcs = List[Self.add_archetype_func]()
+        self._copy_funcs = List[Self.copy_func]()
+        self._extend_funcs = List[Self.extend_func]()
+        self._remove_funcs = List[Self.remove_func]()
         self._length = 0
 
     fn add_component[T: Component](mut self, id: ID) raises:
@@ -57,12 +69,36 @@ struct Storages:
         fn add_archetype(mask: Mask) escaping -> UInt:
             return ptr[].add_archetype(mask)
 
+        fn copy(index: EntityIndex, target: ArchetypeID) escaping -> UInt32:
+            return ptr[].copy(index, target)
+
+        fn extend(archetype: ArchetypeID) escaping -> UInt32:
+            return ptr[].extend(archetype)
+
+        fn remove(index: EntityIndex) escaping -> Bool:
+            return ptr[].remove(index)
+
         self._has_archetype_funcs.append(add_archetype)
+        self._copy_funcs.append(copy)
+        self._extend_funcs.append(extend)
+        self._remove_funcs.append(remove)
+
         self._length += 1
 
     fn add_archetype(mut self, mask: Mask):
         for i in range(self._length):
             _ = self._has_archetype_funcs[i](mask)
+
+    fn copy(
+        mut self, id: ID, index: EntityIndex, target: ArchetypeID
+    ) -> UInt32:
+        return self._copy_funcs[id](index, target)
+
+    fn extend(mut self, id: ID, archetype: ArchetypeID) -> UInt32:
+        return self._extend_funcs[id](archetype)
+
+    fn remove(mut self, id: ID, index: EntityIndex) -> Bool:
+        return self._remove_funcs[id](index)
 
     @always_inline
     fn get[

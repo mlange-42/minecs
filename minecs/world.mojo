@@ -67,7 +67,20 @@ struct World:
         arch_idx = self._find_or_create_archetype(mask)
         new_index = self._archetypes[arch_idx].add(entity)
 
-        # TODO continue
+        for id in old_ids:
+            if mask.get(id[]):
+                _ = self._storages.copy(id[], index, arch_idx)
+        for id in add:
+            _ = self._storages.extend(id[], arch_idx)
+        for id in rem:
+            _ = self._storages.remove(id[], index)
+
+        swapped = old_arch[].remove(index.index)
+        if swapped:
+            var swapEntity = old_arch[]._entities[index.index]
+            self._entities[swapEntity.id()].index = index.index
+
+        self._entities[entity.id()] = EntityIndex(arch_idx, new_index)
 
     fn _find_or_create_archetype(mut self, read mask: Mask) -> ArchetypeID:
         # TODO: use archetype graph
