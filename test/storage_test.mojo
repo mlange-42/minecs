@@ -16,14 +16,14 @@ fn test_storages() raises:
     var r = Registry()
     var s = Storages()
 
-    posId = r.get_id[Position]()
-    velId = r.get_id[Velocity]()
+    posId = r.get_id[Position]()[0]
+    velId = r.get_id[Velocity]()[0]
 
     s.add_component[Position](posId)
     s.add_component[Velocity](velId)
 
-    posStorage = s.get[Position](posId)
-    velStorage = s.get[Velocity](velId)
+    posStorage = s.get_storage[Position](posId)
+    velStorage = s.get_storage[Velocity](velId)
     assert_equal(posStorage[]._component, posId)
     assert_equal(velStorage[]._component, velId)
 
@@ -39,7 +39,7 @@ fn test_storages() raises:
 
     _ = velStorage[].add_archetype(Mask(posId, velId))
 
-    posStorage = s.get[Position](posId)
+    posStorage = s.get_storage[Position](posId)
     assert_equal(len(posStorage[]._archetypes), 2)
     assert_equal(len(velStorage[]._archetypes), 1)
 
@@ -50,7 +50,9 @@ fn test_storages() raises:
     assert_equal(arch2[]._data[100].x, 200)
     assert_equal(arch2[]._data[100].y, 201)
 
-    pos = posStorage[].get_ptr(EntityIndex(arch2Idx, 100))
+    pos = posStorage[].get_ptr[__origin_of(posStorage[])](
+        EntityIndex(arch2Idx, 100)
+    )
     assert_equal(pos[].x, 200)
     assert_equal(pos[].y, 201)
 
@@ -59,10 +61,10 @@ fn test_storage_add_remove() raises:
     var r = Registry()
     var storages = Storages()
 
-    posId = r.get_id[Position]()
+    posId = r.get_id[Position]()[0]
     storages.add_component[Position](posId)
 
-    s = storages.get[Position](posId)
+    s = storages.get_storage[Position](posId)
     arch_idx = s[].add_archetype(Mask(posId))
 
     for i in range(8):
@@ -78,7 +80,7 @@ fn test_storage_add_remove() raises:
     assert_true(swapped)
     assert_equal(len(s[].get_archetype(arch_idx)[]), 6)
 
-    pos = s[].get_ptr(EntityIndex(arch_idx, 0))
+    pos = s[].get_ptr[__origin_of(s[])](EntityIndex(arch_idx, 0))
     assert_equal(pos[].x, 6)
 
 
@@ -86,8 +88,8 @@ fn test_storage_add_archetype() raises:
     var r = Registry()
     var storages = Storages()
 
-    posId = r.get_id[Position]()
-    velId = r.get_id[Velocity]()
+    posId = r.get_id[Position]()[0]
+    velId = r.get_id[Velocity]()[0]
 
     storages.add_component[Position](posId)
     storages.add_component[Velocity](velId)
@@ -95,7 +97,7 @@ fn test_storage_add_archetype() raises:
     storages.add_archetype(Mask(0))
     storages.add_archetype(Mask(1))
 
-    pos_storage = storages.get[Position](posId)
+    pos_storage = storages.get_storage[Position](posId)
     assert_equal(len(pos_storage[]._archetypes), 2)
 
     storages.add_archetype(Mask(2))

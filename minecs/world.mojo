@@ -1,5 +1,6 @@
 from .archetype import Archetype
 from .entity import Entity, EntityIndex
+from .map import Map
 from .mask import Mask
 from .pool import EntityPool
 from .registry import Registry
@@ -32,6 +33,22 @@ struct World:
     @always_inline
     fn is_alive(self, entity: Entity) -> Bool:
         return self._entity_pool.is_alive(entity)
+
+    @always_inline
+    fn component_id[T: Component](mut self) raises -> ID:
+        id_new = self._registry.get_id[T]()
+        id = id_new[0]
+        is_new = id_new[1]
+        if is_new:
+            self._storages.add_component[T](id, self._archetypes)
+        return id
+
+    fn get_map[
+        T: Component,
+    ](mut self, out map: Map[world_origin = __origin_of(self), T=T,],) raises:
+        map = Map[__origin_of(self), T](
+            Pointer.address_of(self),
+        )
 
     fn _create_entity(mut self, arch: ArchetypeID) -> Entity:
         entity = self._entity_pool.get()
@@ -80,6 +97,16 @@ struct World:
             var swapEntity = old_arch[]._entities[index.index]
             self._entities[swapEntity.id()].index = index.index
 
+        print(
+            "",
+            self._entities[entity.id()].archetype,
+            self._entities[entity.id()].index,
+        )
+        print(
+            "-->",
+            arch_idx,
+            new_index,
+        )
         self._entities[entity.id()] = EntityIndex(arch_idx, new_index)
 
     fn _find_or_create_archetype(mut self, read mask: Mask) -> ArchetypeID:

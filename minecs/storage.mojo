@@ -1,5 +1,7 @@
 from sys.info import sizeof
+from collections import List
 from memory import memcpy, UnsafePointer
+from .archetype import Archetype
 from .constants import TOTAL_MASK_BITS
 from .types import Component, ID, ArchetypeID, _DummyComponent
 from .mask import Mask
@@ -54,17 +56,19 @@ struct Storages:
         self._remove_funcs = List[Self.remove_func]()
         self._length = 0
 
-    fn add_component[T: Component](mut self, id: ID) raises:
+    fn add_component[
+        T: Component
+    ](mut self, id: ID, archetypes: List[Archetype]) raises:
         if id != self._length:
             raise Error("storages can be extended only sequentially")
 
-        var s = ComponentStorage[T](id)
+        var s = ComponentStorage[T](id, archetypes)
         memcpy(
             self._get_storage_ptr(id),
             UnsafePointer.address_of(s).bitcast[UInt8](),
             index(Self.storage_size),
         )
-        ptr = self.get[T](id)
+        ptr = self.get_storage[T](id)
 
         fn add_archetype(mask: Mask) escaping -> UInt:
             return ptr[].add_archetype(mask)
@@ -101,12 +105,12 @@ struct Storages:
         return self._remove_funcs[id](index)
 
     @always_inline
-    fn get[
+    fn get_storage[
         T: Component
     ](ref self, id: ID) raises -> Pointer[
-        ComponentStorage[T], __origin_of(self._data)
+        ComponentStorage[T], __origin_of(self)
     ]:
-        return Pointer[ComponentStorage[T], __origin_of(self._data)].address_of(
+        return Pointer[ComponentStorage[T], __origin_of(self)].address_of(
             (self._data + id * Self.storage_size).bitcast[
                 ComponentStorage[T]
             ]()[]
@@ -121,9 +125,16 @@ struct ComponentStorage[T: Component](Storage):
     var _component: ID
     var _archetypes: List[ArchetypeStorage[T]]
 
-    fn __init__(out self, comp: ID):
+    fn __init__(out self, comp: ID, archetypes: List[Archetype]):
         self._component = comp
-        self._archetypes = List[ArchetypeStorage[T]]()
+        self._archetypes = List[ArchetypeStorage[T]](capacity=len(archetypes))
+
+        i = 0
+        for arch in archetypes:
+            self._archetypes.append(ArchetypeStorage[T]())
+            if arch[].mask().get(comp):
+                self._archetypes[i].activate()
+            i += 1
 
     @always_inline
     fn get_type(self) -> ID:
@@ -131,15 +142,16 @@ struct ComponentStorage[T: Component](Storage):
 
     @always_inline
     fn get_archetype(
-        mut self, idx: UInt
+        ref self, idx: UInt
     ) -> Pointer[ArchetypeStorage[T], __origin_of(self._archetypes)]:
         return Pointer.address_of(self._archetypes[idx])
 
     @always_inline
-    fn get_ptr(
-        mut self, index: EntityIndex
-    ) -> Pointer[T, __origin_of(self._archetypes[index.archetype]._data)]:
-        return self._archetypes[index.archetype].get_ptr(index.index)
+    fn get_ptr[
+        origin: MutableOrigin
+    ](ref self, index: EntityIndex) -> Pointer[T, origin]:
+        ptr = self._archetypes[index.archetype].get_unsafe(index.index)
+        return Pointer[T, origin].address_of(ptr[])
 
     @always_inline
     fn has_archetype(self, archetype: ArchetypeID) -> Bool:
@@ -155,7 +167,14 @@ struct ComponentStorage[T: Component](Storage):
 
     @always_inline
     fn extend(mut self, archetype: ArchetypeID) -> UInt32:
-        return self._archetypes[archetype].add(T())
+        idx = self._archetypes[archetype].add(T())
+        print(
+            "extend",
+            self._component,
+            archetype,
+            len(self._archetypes[archetype]),
+        )
+        return idx
 
     @always_inline
     fn remove(mut self, index: EntityIndex) -> Bool:
@@ -163,6 +182,13 @@ struct ComponentStorage[T: Component](Storage):
 
     @always_inline
     fn copy(mut self, index: EntityIndex, target: ArchetypeID) -> UInt32:
+        print(
+            "copy ",
+            self._component,
+            index.archetype,
+            index.index,
+            len(self._archetypes[index.archetype]),
+        )
         comp = self._archetypes[index.archetype].get(index.index)
         return self._archetypes[target].add(comp)
 
@@ -177,11 +203,15 @@ struct ArchetypeStorage[T: Component](CollectionElement):
         self._active = False
 
     @always_inline
-    fn get_ptr(mut self, index: UInt32) -> Pointer[T, __origin_of(self._data)]:
+    fn get_ptr(ref self, index: UInt32) -> Pointer[T, __origin_of(self._data)]:
         return Pointer.address_of(self._data[index])
 
     @always_inline
-    fn get(self, index: UInt32) -> ref [self._data] T:
+    fn get_unsafe(ref self, index: UInt32) -> UnsafePointer[T]:
+        return UnsafePointer.address_of(self._data[index])
+
+    @always_inline
+    fn get(ref self, index: UInt32) -> ref [self._data] T:
         return self._data[index]
 
     @always_inline
