@@ -49,8 +49,8 @@ fn test_world_exchange() raises:
     assert_false(pos_map.has(e1))
     assert_false(vel_map.has(e1))
 
-    world._exchange(e1, List[ID](pos_id), List[ID]())
-    world._exchange(e2, List[ID](vel_id), List[ID]())
+    pos_map.add(e1)
+    vel_map.add(e2)
 
     assert_true(pos_map.has(e1))
     assert_false(vel_map.has(e1))

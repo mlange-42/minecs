@@ -32,3 +32,9 @@ struct Map[world_origin: MutableOrigin, T: Component]:
         return storage[].has_archetype(
             self._world[]._get_entity_index(entity).archetype
         )
+
+    fn add(self, entity: Entity) raises:
+        self._world[]._exchange(entity, List[ID](self._id), List[ID]())
+
+    fn remove(self, entity: Entity) raises:
+        self._world[]._exchange(entity, List[ID](), List[ID](self._id))
