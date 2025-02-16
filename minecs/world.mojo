@@ -3,6 +3,7 @@ from .entity import Entity, EntityIndex
 from .map import Map
 from .mask import Mask
 from .pool import EntityPool
+from .query import Query
 from .registry import Registry
 from .storage import Storages
 from .types import ArchetypeID
@@ -43,10 +44,17 @@ struct World:
             self._storages.add_component[T](id, self._archetypes)
         return id
 
-    fn get_map[
+    fn map[
         T: Component,
-    ](mut self, out map: Map[world_origin = __origin_of(self), T=T,],) raises:
+    ](mut self, out map: Map[world_origin = __origin_of(self), T=T,]) raises:
         map = Map[__origin_of(self), T](
+            Pointer.address_of(self),
+        )
+
+    fn query[
+        *Ts: Component
+    ](mut self, out query: Query[__origin_of(self), *Ts]) raises:
+        query = Query[__origin_of(self), *Ts](
             Pointer.address_of(self),
         )
 

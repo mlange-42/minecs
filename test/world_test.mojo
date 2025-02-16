@@ -41,8 +41,8 @@ fn test_world_exchange() raises:
     vel_id = world.component_id[Velocity]()
     assert_equal(world._storages._length, 2)
 
-    pos_map = world.get_map[Position]()
-    vel_map = world.get_map[Velocity]()
+    pos_map = world.map[Position]()
+    vel_map = world.map[Velocity]()
 
     e1 = world.add_entity()
     e2 = world.add_entity()
