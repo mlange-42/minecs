@@ -208,6 +208,7 @@ struct ArchetypeStorage[T: Component](CollectionElement):
 
     @always_inline
     fn add(mut self, element: T) -> UInt32:
+        # TODO: this is probably a memory leak.
         self._data.append(element)
         return len(self._data) - 1
 
