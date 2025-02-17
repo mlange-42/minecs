@@ -52,16 +52,16 @@ struct World:
         )
 
     fn query[
-        *Ts: Component
-    ](mut self, out query: Query[__origin_of(self), *Ts]) raises:
-        query = Query[__origin_of(self), *Ts](
-            Pointer.address_of(self),
-        )
-
-    fn query_n[
         A: Component, B: Component
     ](mut self, out query: Query2[__origin_of(self), A, B]) raises:
         query = Query2[__origin_of(self), A, B](
+            Pointer.address_of(self),
+        )
+
+    fn query_many[
+        *Ts: Component
+    ](mut self, out query: Query[__origin_of(self), *Ts]) raises:
+        query = Query[__origin_of(self), *Ts](
             Pointer.address_of(self),
         )
 

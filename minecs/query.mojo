@@ -169,19 +169,20 @@ struct Query2[world_origin: MutableOrigin, A: Component, B: Component]:
         ],
     ) raises:
         iterator = Self.Iterator(
-            Pointer.address_of(self._world[]._archetypes),
-            Pointer.address_of(self._world[]._storages),
-            self._mask,
-            self._ids,
+            _QueryIterator(
+                Pointer.address_of(self._world[]._archetypes),
+                Pointer.address_of(self._world[]._storages),
+                self._mask,
+                self._ids,
+            )
         )
 
 
-struct QueryIterator2[
-    archetype_mutability: Bool, //,
+@value
+struct _QueryIterator[
+    archetype_mutability: Bool,
     archetype_origin: Origin[archetype_mutability],
     storages_origin: MutableOrigin,
-    A: Component,
-    B: Component,
 ]:
     var _mask: Mask
     var _storages: Pointer[Storages, storages_origin]
@@ -190,9 +191,6 @@ struct QueryIterator2[
     var _index: Int
     var _last_index: Int
     var _ids: List[ID]
-
-    var _storage_a: Pointer[ComponentStorage[A], storages_origin]
-    var _storage_b: Pointer[ComponentStorage[B], storages_origin]
 
     fn __init__(
         out self,
@@ -210,10 +208,6 @@ struct QueryIterator2[
         self._last_index = -1
 
         self._ids = ids
-
-        self._storage_a = self._storages[].get_storage[A](self._ids[0])
-        self._storage_b = self._storages[].get_storage[B](self._ids[1])
-
         _ = self._next_archetype()
 
     @always_inline
@@ -226,18 +220,6 @@ struct QueryIterator2[
     @always_inline
     fn get_entity(self, out entity: Entity):
         entity = self._archetype[]._entities[self._index]
-
-    @always_inline
-    fn get_a(ref self) raises -> Pointer[A, __origin_of(self)]:
-        return Pointer[A, __origin_of(self)].address_of(
-            self._storage_a[].get_unsafe(self._archetype[]._id, self._index)[]
-        )
-
-    @always_inline
-    fn get_b(ref self) raises -> Pointer[B, __origin_of(self)]:
-        return Pointer[B, __origin_of(self)].address_of(
-            self._storage_b[].get_unsafe(self._archetype[]._id, self._index)[]
-        )
 
     @always_inline
     fn _next_archetype(mut self) -> Bool:
@@ -261,3 +243,56 @@ struct QueryIterator2[
                 continue
             size += len(arch[])
         return size
+
+
+struct QueryIterator2[
+    archetype_mutability: Bool, //,
+    archetype_origin: Origin[archetype_mutability],
+    storages_origin: MutableOrigin,
+    A: Component,
+    B: Component,
+]:
+    var _inner: _QueryIterator[
+        archetype_mutability, archetype_origin, storages_origin
+    ]
+    var _storage_a: Pointer[ComponentStorage[A], storages_origin]
+    var _storage_b: Pointer[ComponentStorage[B], storages_origin]
+
+    fn __init__(
+        out self,
+        inner: _QueryIterator[
+            archetype_mutability, archetype_origin, storages_origin
+        ],
+    ) raises:
+        self._inner = inner
+
+        self._storage_a = self._inner._storages[].get_storage[A](
+            self._inner._ids[0]
+        )
+        self._storage_b = self._inner._storages[].get_storage[B](
+            self._inner._ids[1]
+        )
+
+    @always_inline
+    fn next(mut self) -> Bool:
+        return self._inner.next()
+
+    @always_inline
+    fn get_entity(self, out entity: Entity):
+        return self._inner.get_entity()
+
+    @always_inline
+    fn get_a(ref self) raises -> Pointer[A, __origin_of(self)]:
+        return Pointer[A, __origin_of(self)].address_of(
+            self._storage_a[].get_unsafe(
+                self._inner._archetype[]._id, self._inner._index
+            )[]
+        )
+
+    @always_inline
+    fn get_b(ref self) raises -> Pointer[B, __origin_of(self)]:
+        return Pointer[B, __origin_of(self)].address_of(
+            self._storage_b[].get_unsafe(
+                self._inner._archetype[]._id, self._inner._index
+            )[]
+        )
