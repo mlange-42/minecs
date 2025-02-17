@@ -20,9 +20,11 @@ struct Archetype(CollectionElement):
         self._mask = mask^
         self._entities = List[Entity]()
 
+    @always_inline
     fn mask(self) -> ref [self._mask] Mask:
         return self._mask
 
+    @always_inline
     fn components(self) -> ref [self._components] List[ID]:
         return self._components
 
