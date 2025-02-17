@@ -4,6 +4,7 @@ from sys.intrinsics import _type_is_eq
 from .archetype import Archetype
 from .entity import Entity
 from .mask import Mask
+from .storage import Storages
 from .types import ID
 from .util import _contains_type
 
@@ -13,7 +14,7 @@ struct EntityAccess:
 
 
 struct Query[world_origin: MutableOrigin, *Ts: Component]:
-    alias Iterator = QueryIterator[_, *Ts]
+    alias Iterator = QueryIterator[_, _, *Ts]
     alias component_count = len(VariadicList(Ts))
 
     var _world: Pointer[World, world_origin]
@@ -34,12 +35,14 @@ struct Query[world_origin: MutableOrigin, *Ts: Component]:
     fn __iter__(
         self,
         out iterator: Self.Iterator[
-            archetype_origin = __origin_of(self._world[]._archetypes[0])
+            archetype_origin = __origin_of(self._world[]._archetypes[0]),
+            storages_origin = __origin_of(self._world[]._storages),
         ],
     ):
         iterator = Self.Iterator(
             # self._world,
             Pointer.address_of(self._world[]._archetypes),
+            Pointer.address_of(self._world[]._storages),
             self._mask,
             self._ids,
         )
@@ -59,6 +62,7 @@ struct QueryIterator[
     archetype_mutability: Bool, //,
     # world_origin: MutableOrigin,
     archetype_origin: Origin[archetype_mutability],
+    storages_origin: MutableOrigin,
     *Ts: Component,
 ]:
     alias component_count = len(VariadicList(Ts))
@@ -67,6 +71,7 @@ struct QueryIterator[
     var _mask: Mask
     var _ids: List[ID]  # TODO: use inline array?
 
+    var _storages: Pointer[Storages, storages_origin]
     var _archetypes: Pointer[List[Archetype], archetype_origin]
     var _archetype: Pointer[Archetype, archetype_origin]
     var _index: Int
@@ -76,6 +81,7 @@ struct QueryIterator[
         out self,
         # world: Pointer[World, world_origin],
         archetypes: Pointer[List[Archetype], archetype_origin],
+        storages: Pointer[Storages, storages_origin],
         mask: Mask,
         ids: List[ID],
     ):
@@ -83,6 +89,7 @@ struct QueryIterator[
         self._mask = mask
         self._ids = ids
 
+        self._storages = storages
         self._archetypes = archetypes
         self._archetype = Pointer.address_of(self._archetypes[][0])
         self._index = -1
@@ -104,6 +111,13 @@ struct QueryIterator[
     @always_inline
     fn get_entity(self, out entity: Entity):
         entity = self._archetype[]._entities[self._index]
+
+    @always_inline
+    fn get[T: Component](self) raises -> Pointer[T, Self.storages_origin]:
+        storage = self._storages[].get_storage[T](self.get_id[T]())
+        return storage[].get_ptr[Self.storages_origin](
+            self._archetype[]._id, self._index
+        )
 
     @always_inline
     fn _next_archetype(mut self) -> Bool:

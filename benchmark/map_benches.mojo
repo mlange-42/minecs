@@ -20,16 +20,15 @@ fn benchmark_map_get() raises:
 
     fn bench() capturing:
         var e = mx.Entity()
-        # try:
         iter = query.__iter__()
-        while iter.next():
-            e = iter.get_entity()
-            # var pos = pos_map.get(e)
-            # var vel = vel_map.get(e)
-            # pos[].x += vel[].x
-            # pos[].y += vel[].y
-        # except:
-        #    pass
+        try:
+            while iter.next():
+                var pos = iter.get[Position]()
+                var vel = iter.get[Velocity]()
+                pos[].x += vel[].x
+                pos[].y += vel[].y
+        except:
+            pass
         benchmark.keep(e)
 
     var report = benchmark.run[bench]()

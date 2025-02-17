@@ -159,6 +159,13 @@ struct ComponentStorage[T: Component](Storage):
         return Pointer[T, origin].address_of(ptr[])
 
     @always_inline
+    fn get_ptr[
+        origin: MutableOrigin
+    ](ref self, archetype: ArchetypeID, index: UInt32) -> Pointer[T, origin]:
+        ptr = self._archetypes[archetype].get_unsafe(index)
+        return Pointer[T, origin].address_of(ptr[])
+
+    @always_inline
     fn has_archetype(self, archetype: ArchetypeID) -> Bool:
         return self._archetypes[archetype].is_active()
 
