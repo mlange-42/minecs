@@ -47,15 +47,6 @@ struct Query[world_origin: MutableOrigin, *Ts: Component]:
             self._ids,
         )
 
-    fn each[func: fn (entity: Entity) capturing](self):
-        for arch_idx in range(len(self._world[]._archetypes)):
-            arch = Pointer.address_of(self._world[]._archetypes[arch_idx])
-            if not arch[].mask().contains(self._mask):
-                continue
-
-            for e in arch[]._entities:
-                func(e[])
-
 
 @value
 struct QueryIterator[
