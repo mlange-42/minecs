@@ -21,7 +21,7 @@ fn test_query() raises:
 
     query = world.query[Velocity]()
 
-    fn func(e: Entity):
+    fn func(e: Entity) capturing:
         print(String(e))
 
-    query.each(func)
+    query.each[func]()
