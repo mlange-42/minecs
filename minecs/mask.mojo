@@ -23,6 +23,14 @@ struct Mask(Stringable, KeyElement):
             self.set[True](bit)
 
     @always_inline
+    fn __init__(mut self, bits: List[ID]):
+        """Initializes the mask with the bits at the given indices set to True.
+        """
+        self._bytes = SIMD[DType.uint8, Self.total_bytes]()
+        for bit in bits:
+            self.set[True](bit[])
+
+    @always_inline
     fn __init__(mut self, *, bytes: SIMD[DType.uint8, Self.total_bytes]):
         """Initializes the mask with the given bytes."""
         self._bytes = bytes

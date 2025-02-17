@@ -9,7 +9,8 @@ from components import Position, Velocity
 
 
 fn test_storage() raises:
-    var s = ComponentStorage[Position](11)
+    var s = ComponentStorage[Position]()
+    s.initialize(11, List[Archetype]())
     assert_equal(s.get_type(), 11)
 
 
