@@ -23,5 +23,3 @@ fn test_query() raises:
     iter = query.__iter__()
     while iter.next():
         print(String(iter.get_entity()))
-
-    raise Error()
