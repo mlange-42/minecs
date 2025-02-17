@@ -3,7 +3,7 @@ from .entity import Entity, EntityIndex
 from .map import Map
 from .mask import Mask
 from .pool import EntityPool
-from .query import Query
+from .query import Query, Query2
 from .registry import Registry
 from .storage import Storages
 from .types import ArchetypeID
@@ -55,6 +55,13 @@ struct World:
         *Ts: Component
     ](mut self, out query: Query[__origin_of(self), *Ts]) raises:
         query = Query[__origin_of(self), *Ts](
+            Pointer.address_of(self),
+        )
+
+    fn query_n[
+        A: Component, B: Component
+    ](mut self, out query: Query2[__origin_of(self), A, B]) raises:
+        query = Query2[__origin_of(self), A, B](
             Pointer.address_of(self),
         )
 

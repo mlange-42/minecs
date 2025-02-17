@@ -1,3 +1,5 @@
+from testing import *
+
 from minecs import World, Entity
 from minecs.query import Query
 
