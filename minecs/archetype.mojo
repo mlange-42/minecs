@@ -41,3 +41,6 @@ struct Archetype(CollectionElement):
 
         self._entities.resize(len(self._entities) - 1)
         return swapped
+
+    fn __len__(self) -> Int:
+        return len(self._entities)

@@ -20,8 +20,8 @@ fn test_query() raises:
         vel_map.add(e)
 
     query = world.query[Velocity]()
+    iter = query.__iter__()
+    while iter.next():
+        print(String(iter.get_entity()))
 
-    fn func(e: Entity) capturing:
-        print(String(e))
-
-    query.each[func]()
+    raise Error()

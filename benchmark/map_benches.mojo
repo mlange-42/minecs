@@ -12,23 +12,25 @@ fn benchmark_map_get() raises:
     vel_map = world.map[Velocity]()
 
     for _ in range(n):
-        e = world.add_entity()
+        var e = world.add_entity()
         pos_map.add(e)
         vel_map.add(e)
 
     query = world.query[Position, Velocity]()
 
-    fn func(e: mx.Entity) capturing:
-        try:
-            pos = pos_map.get(e)
-            vel = vel_map.get(e)
-            pos[].x += vel[].x
-            pos[].y += vel[].y
-        except:
-            pass
-
     fn bench() capturing:
-        query.each[func]()
+        var e = mx.Entity()
+        # try:
+        iter = query.__iter__()
+        while iter.next():
+            e = iter.get_entity()
+            # var pos = pos_map.get(e)
+            # var vel = vel_map.get(e)
+            # pos[].x += vel[].x
+            # pos[].y += vel[].y
+        # except:
+        #    pass
+        benchmark.keep(e)
 
     var report = benchmark.run[bench]()
     print("benchmark_map_get")
