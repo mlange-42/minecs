@@ -26,4 +26,4 @@ jobs:
     - name: Run benchmarks
       run: |
         source /home/runner/.bash_profile 
-        magic run mojo -I . benchmark/run_benchmarks.mojo
+        magic run mojo -I . benchmark/main.mojo

@@ -28,7 +28,7 @@ struct Query[world_origin: MutableOrigin, *Ts: Component]:
 
         self._mask = Mask(self._ids)
 
-    fn each(self, func: fn (entity: Entity)):
+    fn each[func: fn (entity: Entity) capturing](self):
         for arch_idx in range(len(self._world[]._archetypes)):
             arch = self._world[]._archetypes[arch_idx]
             if not arch.mask().contains(self._mask):
