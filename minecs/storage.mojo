@@ -122,6 +122,7 @@ struct Storages:
         return self._data + id * Self.storage_size
 
 
+@value
 struct ComponentStorage[T: Component](Storage):
     var _component: ID
     var _archetypes: List[ArchetypeStorage[T]]
@@ -152,11 +153,21 @@ struct ComponentStorage[T: Component](Storage):
         return Pointer.address_of(self._archetypes[idx])
 
     @always_inline
+    fn get_unsafe(ref self, index: EntityIndex) -> UnsafePointer[T]:
+        return self._archetypes[index.archetype].get_unsafe(index.index)
+
+    @always_inline
     fn get_ptr[
         origin: MutableOrigin
     ](ref self, index: EntityIndex) -> Pointer[T, origin]:
         ptr = self._archetypes[index.archetype].get_unsafe(index.index)
         return Pointer[T, origin].address_of(ptr[])
+
+    @always_inline
+    fn get_unsafe(
+        ref self, archetype: ArchetypeID, index: UInt32
+    ) -> UnsafePointer[T]:
+        return self._archetypes[archetype].get_unsafe(index)
 
     @always_inline
     fn get_ptr[
