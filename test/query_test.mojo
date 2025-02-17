@@ -21,7 +21,7 @@ fn test_query() raises:
         pos_map.add(e)
         vel_map.add(e)
 
-    query = world.query[Velocity]()
+    query = world.query_many[Velocity]()
     iter = query.__iter__()
     while iter.next():
         print(String(iter.get_entity()))
