@@ -3,6 +3,7 @@ from .entity import Entity, EntityIndex
 from .map import Map
 from .mask import Mask
 from .pool import EntityPool
+from .query import Query
 from .registry import Registry
 from .storage import Storages
 from .types import ArchetypeID
@@ -20,12 +21,12 @@ struct World:
         self._registry = Registry()
         self._storages = Storages()
         self._archetypes = List[Archetype]()
-        self._archetypes.append(Archetype(ArchetypeID(0), List[ID](), Mask()))
 
         self._entity_pool = EntityPool()
         self._entities = List[EntityIndex, hint_trivial_type=True](
             EntityIndex(0, 0)
         )
+        _ = self._create_archetype(Mask())
 
     fn add_entity(mut self) -> Entity:
         return self._create_entity(0)
@@ -43,10 +44,17 @@ struct World:
             self._storages.add_component[T](id, self._archetypes)
         return id
 
-    fn get_map[
+    fn map[
         T: Component,
-    ](mut self, out map: Map[world_origin = __origin_of(self), T=T,],) raises:
+    ](mut self, out map: Map[world_origin = __origin_of(self), T=T,]) raises:
         map = Map[__origin_of(self), T](
+            Pointer.address_of(self),
+        )
+
+    fn query[
+        *Ts: Component
+    ](mut self, out query: Query[__origin_of(self), *Ts]) raises:
+        query = Query[__origin_of(self), *Ts](
             Pointer.address_of(self),
         )
 
@@ -76,7 +84,7 @@ struct World:
         index = self._entities[entity.id()]
         old_arch = Pointer.address_of(self._archetypes[index.archetype])
 
-        mask = old_arch[].mask()
+        var mask = old_arch[].mask()
         self._exchange_on_mask(mask, add, rem)
 
         old_ids = old_arch[].components()
@@ -87,29 +95,18 @@ struct World:
         for id in old_ids:
             if mask.get(id[]):
                 _ = self._storages.copy(id[], index, arch_idx)
+            _ = self._storages.remove(id[], index)
         for id in add:
             _ = self._storages.extend(id[], arch_idx)
-        for id in rem:
-            _ = self._storages.remove(id[], index)
 
         swapped = old_arch[].remove(index.index)
         if swapped:
-            var swapEntity = old_arch[]._entities[index.index]
-            self._entities[swapEntity.id()].index = index.index
+            var swap_entity = old_arch[]._entities[index.index]
+            self._entities[swap_entity.id()].index = index.index
 
-        print(
-            "",
-            self._entities[entity.id()].archetype,
-            self._entities[entity.id()].index,
-        )
-        print(
-            "-->",
-            arch_idx,
-            new_index,
-        )
         self._entities[entity.id()] = EntityIndex(arch_idx, new_index)
 
-    fn _find_or_create_archetype(mut self, read mask: Mask) -> ArchetypeID:
+    fn _find_or_create_archetype(mut self, mask: Mask) -> ArchetypeID:
         # TODO: use archetype graph
         index = -1
         for i in range(len(self._archetypes)):
@@ -121,7 +118,7 @@ struct World:
             index = Int(self._create_archetype(mask))
         return ArchetypeID(index)
 
-    fn _create_archetype(mut self, read mask: Mask) -> ArchetypeID:
+    fn _create_archetype(mut self, mask: Mask) -> ArchetypeID:
         comps = mask.get_bits(self._registry)
         index = len(self._archetypes)
         self._archetypes.append(Archetype(index, comps, mask))
